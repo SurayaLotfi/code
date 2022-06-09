@@ -1,3 +1,23 @@
+# Load R packages
+library(lubridate)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(scales)
+library(glue)
+library(leaflet)
+library(skimr)
+library(countrycode)
+library(shiny)
+library(shinydashboard)
+library(sf)
+library(rgeos)
+library(ggspatial)
+library(rworldmap)
+library(shinycssloaders)
+library(tidyverse)
 
 #header
 header<- dashboardHeader(title = "SOCIAL MEDIA INFLUENCE",
