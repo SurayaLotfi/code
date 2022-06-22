@@ -1,0 +1,13 @@
+name: Crime_Analyzer
+title: Crime_Analyzer
+username:
+account: amriner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6534217
+bundleId: 6033862
+url: https://amriner.shinyapps.io/CRIME_ANALYZER/
+when: 1655937431.1324
+lastSyncTime: 1655937431.1324
+asMultiple: FALSE
+asStatic: FALSE
