@@ -1,3 +1,60 @@
+library(lubridate)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(scales)
+library(glue)
+library(leaflet)
+library(skimr)
+library(countrycode)
+library(shiny)
+library(shinydashboard)
+library(sf)
+library(rgeos)
+library(ggspatial)
+library(rworldmap)
+library(shinycssloaders)
+library(tidyverse)
+library(tidyverse)
+library(magrittr)
+library(png)
+library(highcharter)
+library(shinyjs)
+library(tmap)
+library(tmaptools)
+library(mapdeck)
+
+prison_population_rate <- read_csv("prison-population-rate.csv")
+data_cts_violent_and_sexual_crime <- read_csv("data_cts_violent_and_sexual_crime.csv")
+data_cts_intentional_homicide <- read_csv("data_cts_intentional_homicide.csv")
+data_cts_corruption_and_economic_crime <- read_csv("data_cts_corruption_and_economic_crime.csv")
+csvData <- read_csv("csvData.csv")
+corruption_economic_crime <- read_csv("corruption_economic_crime.csv")
+data_cts_access_and_functioning_of_justice <- read_csv("data_cts_access_and_functioning_of_justice.csv")
+prison_population_rate <- read_csv("prison-population-rate.csv")
+corruption_economic_crime <- read_csv("corruption_economic_crime.csv")
+
+ih_line_data <- data_cts_intentional_homicide %>% group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>% ungroup%>%
+  filter(rate!=0)%>%
+  mutate(label = paste0('<b>',Region,'</b>',
+                        '(', Year, ')<br>',
+                        'Value(rate): ',round(rate,2),'per 1,000'))
+
+vs_line_data <- data_cts_violent_and_sexual_crime %>%  group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>% ungroup%>%
+  filter(rate!=0)%>%
+  mutate(label = paste0('<b>',Region,'</b>',
+                        '(', Year, ')<br>',
+                        'Value(rate): ',round(rate,2),'per 1,000'))
+
+ce_line_data <- corruption_economic_crime %>% group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>%ungroup%>%
+  filter(rate!=0)%>% mutate(label = paste0('<b>',Region,'</b>',
+                                           '(', Year, ')<br>',
+                                           'Value(rate): ',round(rate,2),'per 1,000'))
 function(input,output){
   
  #crimerates
@@ -270,7 +327,7 @@ function(input,output){
       geom_line(aes(col=Region))+geom_point()+geom_area(fill="#02d6d9",alpha=0.4)+
       scale_y_continuous(labels=comma)+
       labs(title = "",
-           x="Year",
+           x="Indicator",
            Y = "Number of Justice")+
       theme_bw()
     
