@@ -1,5 +1,61 @@
 
+library(lubridate)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyr)
+library(scales)
+library(glue)
+library(leaflet)
+library(skimr)
+library(countrycode)
+library(shiny)
+library(shinydashboard)
+library(sf)
+library(rgeos)
+library(ggspatial)
+library(rworldmap)
+library(shinycssloaders)
+library(tidyverse)
+library(tidyverse)
+library(magrittr)
+library(png)
+library(highcharter)
+library(shinyjs)
+library(tmap)
+library(tmaptools)
+library(mapdeck)
 
+prison_population_rate <- read_csv("prison-population-rate.csv")
+data_cts_violent_and_sexual_crime <- read_csv("data_cts_violent_and_sexual_crime.csv")
+data_cts_intentional_homicide <- read_csv("data_cts_intentional_homicide.csv")
+data_cts_corruption_and_economic_crime <- read_csv("data_cts_corruption_and_economic_crime.csv")
+csvData <- read_csv("csvData.csv")
+corruption_economic_crime <- read_csv("corruption_economic_crime.csv")
+data_cts_access_and_functioning_of_justice <- read_csv("data_cts_access_and_functioning_of_justice.csv")
+prison_population_rate <- read_csv("prison-population-rate.csv")
+corruption_economic_crime <- read_csv("corruption_economic_crime.csv")
+
+ih_line_data <- data_cts_intentional_homicide %>% group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>% ungroup%>%
+  filter(rate!=0)%>%
+  mutate(label = paste0('<b>',Region,'</b>',
+                        '(', Year, ')<br>',
+                        'Value(rate): ',round(rate,2),'per 1,000'))
+
+vs_line_data <- data_cts_violent_and_sexual_crime %>%  group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>% ungroup%>%
+  filter(rate!=0)%>%
+  mutate(label = paste0('<b>',Region,'</b>',
+                        '(', Year, ')<br>',
+                        'Value(rate): ',round(rate,2),'per 1,000'))
+
+ce_line_data <- corruption_economic_crime %>% group_by(Region,Year)%>%
+  summarise(rate = sum(VALUE)/1000)%>%ungroup%>%
+  filter(rate!=0)%>% mutate(label = paste0('<b>',Region,'</b>',
+                                           '(', Year, ')<br>',
+                                           'Value(rate): ',round(rate,2),'per 1,000'))
 #header
 header<- dashboardHeader(title = "GLOBAL CRIME ANALYZER",
                          titleWidth = 300,disable = FALSE)
@@ -104,7 +160,7 @@ body <- dashboardBody(
             p("- In Malaysia, In 2020, crime index decreased by 21.4 per cent to 65,623 cases as compared to 83,456 cases in 2019. Violent and property crime also decreased by 19.5 per cent and 21.8 per cent respectively to 13,279 cases and 52,344 cases in 2020."
               , style = "font-size: 20px;"),
             p("- Nowadays, crimes are slightly on the rise. The offenders, the abetted, and the victims are coming from various type of ages, adults, youngsters and even children which resulted in anxious and worries especially among parents and peers.", style = "font-size: 20px;"),
-            p("- As a result, it reflects the country’s background that will be presented to the world.", style = "font-size: 20px;"),
+            p("- As a result, it reflects the country's background that will be presented to the world.", style = "font-size: 20px;"),
             br(),
             strong(p("Solution:", style = "font-size: 24px;")),
             p("Crime is a complex matter that has posed a major threat to the entire world. Crimes not only burden people around but may also drag down 
@@ -112,11 +168,11 @@ body <- dashboardBody(
             people to visualize the data in an interesting way, thus helping people to spread awareness to the whole world.", style = "font-size: 20px;"),
             br(),
             strong(p("The questions:", style = "font-size: 24px;")),
-            p("* Which region has the highest crime category each year?", style = "font-size: 20px;"),
-            p("* How the number of prisoners are related with the number of the crime reported? ", style = "font-size: 20px;"),
-            p("* How likely juvenile and adult will commit crime?",  style = "font-size: 20px;"),
-            p("* What year is the highest crime happened in the country?", style = "font-size: 20px;"), 
-            p("* How rates of each crime for each country?",  style = "font-size: 20px;"),
+            p("* Which country has the highest crime rate?", style = "font-size: 20px;"),
+            p("* Which type of crime has the most number of victims? ", style = "font-size: 20px;"),
+            p("* How many criminal justice have been record throughout the year?",  style = "font-size: 20px;"),
+            p("* Which country has the highest prison population rateW?", style = "font-size: 20px;"), 
+            p("* What are the ranking for each country in term of crime rate?",  style = "font-size: 20px;"),
             br(),
             strong(p("Objective:", style = "font-size: 24px;")),
             p("1. Spread awareness about crimes around the world.", style = "font-size: 20px;"),
@@ -138,6 +194,7 @@ body <- dashboardBody(
     tabItem(
       tabName = "crimerates",
       
+      h3("This panel shows the crime rate of countries in 2022"),
       fluidRow(
         box(
           title = "GLOBAL CRIMES RATE",
@@ -188,14 +245,16 @@ body <- dashboardBody(
     tabItem(
       tabName = "types",
       
+      h3("This panel shows total number of victims based on the type of crimes "),
+      
         box(
           title = "TYPES OF CRIMES",
           width = 12,
           radioButtons(
             inputId = "crimes",
             label = "Select the type of crime",
-            choices = c("Intentional Homicide","Violent and sexual",
-                        "Trafficking","Corruption and Economic"),
+            choices = c("Intentional Homicide","Violent and sexual"
+                        ,"Corruption and Economic"),
             selected = "Intentional Homicide",
             inline = F
           )
@@ -209,17 +268,17 @@ body <- dashboardBody(
               plotlyOutput(outputId = "toc") %>% withSpinner(color="red")
             )
           ),
-      
+      br(),
       fluidRow(
         box(
           title = "WORLDWIDE OVERVIEW",
           width = 12,
           
-          valueBoxOutput(outputId = "total_value",width = 4),
+          valueBoxOutput(outputId = "total_value",width = 5),
           
-          valueBoxOutput(outputId =  "maxcountry", width = 4),
+          valueBoxOutput(outputId =  "maxcountry", width = 5),
           
-          valueBoxOutput(outputId = "mincountry", width = 4)
+          valueBoxOutput(outputId = "mincountry", width = 5)
           
         )
       ),
@@ -230,6 +289,8 @@ body <- dashboardBody(
     
     tabItem(
       tabName = "justice",
+      
+      h3("This panel shows the criminal justice that has been made throughout the year, based on the continent"),
       
       fluidRow(
         box(
@@ -269,7 +330,7 @@ body <- dashboardBody(
       
     tabItem(
       tabName = "pp",
-      
+      h3("This panel shows a map which labels the prison population for each country"),
       fluidRow(
         
         box(
@@ -360,20 +421,18 @@ body <- dashboardBody(
     
     tabItem(
       tabName = "aboutus",
-      
       fluidRow(
         box(
           title = "ABOUT US",
           width = 12,
-          strong(p("Group Members", align = "center", style = "font-size: 30px;")),
-          #HTML(''),
-          
-          h3("We are a group of four students who study in Computer Science, 
-            major in Information Systems and expected to graduate on 2024."),
-          h3("Wan Suraya", align = "center"),
-          h3("Amrin Hafiz", align = "center"),
-          h3("Nurul Filzah", align = "center"),
-          h3("Syakir Nu'aim", align = "center")
+          strong(p("Group Members", align = "center", style = "font-size: 40px;")),
+          h3("We are a group of four passionate students of University Malaya (UM) taking Computer Science, 
+            major in Information Systems."),
+          h3("* Wan Suraya binti Wan Mohd Lotfi"),
+          h3("* Amrin Hafiz bin Eddy Rosyadie"),
+          h3("* Nurul Filzah binti Abdul Hadi"),
+          h3("* Ahmad Syakir Nu'aim bin Ramli"),
+          background = 'navy'
         )
       )
     )
@@ -384,3 +443,6 @@ body <- dashboardBody(
 
 
 dashboardPage(header, sidebar, body,skin = "green")
+
+
+
